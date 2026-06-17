@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSS Upload Tracker</title>
+<style>
+:root {
+  --bg: #1a1917;
+  --bg2: #232220;
+  --bg3: #2c2a27;
+  --bg4: #353330;
+  --text: #f0ede6;
+  --text2: #b8b4ac;
+  --text3: #7a776f;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --accent: #8B4A2B;
+  --accent2: #b05e35;
+  --accent-bg: rgba(139,74,43,0.15);
+  --teal: #2a7a60;
+  --teal-bg: rgba(42,122,96,0.15);
+  --teal-text: #5dcaa5;
+  --amber: #c17f24;
+  --amber-bg: rgba(193,127,36,0.15);
+  --amber-text: #f0a84a;
+  --blue: #2a5fa5;
+  --blue-bg: rgba(42,95,165,0.15);
+  --blue-text: #85b7eb;
+  --red: #8B2A2A;
+  --red-bg: rgba(139,42,42,0.15);
+  --green: #2a6b3c;
+  --green-text: #6dd98a;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+a{color:var(--accent2);text-decoration:none}
+
+/* HEADER */
+.app-header{background:var(--bg2);border-bottom:1px solid var(--border2);padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.app-logo{width:32px;height:32px;background:var(--accent);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.app-title{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.app-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.header-stats{display:flex;gap:12px;margin-left:auto}
+.hstat{text-align:right}
+.hstat-n{font-size:18px;font-weight:600;line-height:1}
+.hstat-l{font-size:11px;color:var(--text3);margin-top:1px}
+.progress-bar-wrap{width:120px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:6px}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+
+/* TOOLBAR */
+.toolbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:65px;z-index:99}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px 7px 32px;color:var(--text);font-size:13px;outline:none}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px}
+select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 10px;color:var(--text);font-size:13px;outline:none;cursor:pointer}
+select:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.toolbar-right{display:flex;gap:8px;margin-left:auto}
+
+/* MAIN LAYOUT */
+.main{display:flex;height:calc(100vh - 115px)}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0}
+.sidebar-section{margin-bottom:4px}
+.sidebar-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:8px 16px 4px}
+.sidebar-item{padding:7px 16px;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;transition:all .1s}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:var(--accent-bg);color:var(--accent2);border-right:2px solid var(--accent)}
+.sidebar-count{font-size:11px;color:var(--text3);background:var(--bg3);padding:1px 6px;border-radius:10px}
+.sidebar-item.active .sidebar-count{background:var(--accent-bg);color:var(--accent2)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* PRODUCT CARDS */
+.category-section{margin-bottom:28px}
+.category-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.category-title{font-size:15px;font-weight:600}
+.category-meta{font-size:12px;color:var(--text3)}
+.category-progress{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.cat-prog-bar{width:80px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.cat-prog-fill{height:100%;background:var(--teal);border-radius:2px;transition:width .3s}
+
+.product-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden}
+.product-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
+.product-header:hover{background:var(--bg3)}
+.product-name{font-size:13px;font-weight:500;flex:1}
+.product-brand{font-size:11px;color:var(--text3);margin-top:1px}
+.product-progress{display:flex;align-items:center;gap:8px}
+.prog-text{font-size:11px;color:var(--text3);white-space:nowrap}
+.prog-bar{width:60px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .3s}
+.chevron-icon{color:var(--text3);font-size:12px;transition:transform .2s;flex-shrink:0}
+.product-card.open .chevron-icon{transform:rotate(180deg)}
+
+.slide-grid{padding:0 16px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;border-top:1px solid var(--border)}
+.slide-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:var(--radius);cursor:pointer;transition:all .1s;border:1px solid transparent}
+.slide-item:hover{border-color:var(--border2)}
+.slide-item.checked{background:var(--teal-bg);border-color:rgba(42,122,96,0.3)}
+.slide-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.slide-item.checked .slide-check{background:var(--teal);border-color:var(--teal)}
+.slide-check-icon{font-size:10px;color:#fff;display:none}
+.slide-item.checked .slide-check-icon{display:block}
+.slide-name{font-size:12px;color:var(--text2);line-height:1.3}
+.slide-item.checked .slide-name{color:var(--teal-text)}
+.slide-item.excluded{background:var(--bg);border:1px dashed rgba(139,42,42,0.3);opacity:0.5}
+.slide-item.excluded .slide-name{color:var(--text3);text-decoration:line-through}
+.slide-item.excluded .slide-check{border-color:var(--red);background:var(--red-bg)}
+.slide-exclude{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 5px;border-radius:3px;font-size:11px;margin-left:4px;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.slide-exclude:hover{background:var(--red-bg);color:#f08080}
+.slide-item.excluded .slide-exclude{color:#f08080;background:var(--red-bg)}
+.slide-tier{font-size:10px;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0}
+.tier-t1{background:var(--teal-bg);color:var(--teal-text)}
+.tier-t2{background:var(--amber-bg);color:var(--amber-text)}
+.tier-t3{background:var(--accent-bg);color:var(--accent2)}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-xl);width:100%;max-width:520px;max-height:80vh;overflow-y:auto}
+.modal-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px;display:block}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;outline:none}
+.form-input:focus{border-color:var(--accent)}
+.form-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;outline:none;cursor:pointer}
+.form-select:focus{border-color:var(--accent)}
+.modal-footer{padding:0 20px 20px;display:flex;gap:8px;justify-content:flex-end}
+
+/* SLIDE MANAGER */
+.slide-manager{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px}
+.slide-manager-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.slide-manager-title{font-size:14px;font-weight:600}
+.slide-type-list{padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
+.slide-type-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:var(--radius);font-size:12px}
+.slide-type-name{flex:1;color:var(--text2)}
+.slide-type-cat{font-size:10px;color:var(--text3)}
+.slide-delete{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:12px}
+.slide-delete:hover{background:var(--red-bg);color:#f08080}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:32px;margin-bottom:8px}
+.empty-text{font-size:14px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px}
+.badge-complete{background:var(--teal-bg);color:var(--teal-text)}
+.badge-partial{background:var(--amber-bg);color:var(--amber-text)}
+.badge-empty{background:var(--bg4);color:var(--text3)}
+
+/* BULK ACTIONS */
+.bulk-bar{background:var(--accent-bg);border:1px solid rgba(139,74,43,0.3);border-radius:var(--radius);padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:13px}
+.bulk-bar-text{color:var(--accent2);flex:1}
+
+/* TABS */
+.tabs{display:flex;gap:2px;margin-bottom:20px;background:var(--bg2);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border)}
+.tab{flex:1;padding:8px;text-align:center;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;color:var(--text3);transition:all .15s}
+.tab.active{background:var(--bg4);color:var(--text)}
+
+/* TOOLTIP */
+.tooltip{position:relative}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--text);font-size:11px;padding:4px 8px;border-radius:var(--radius);white-space:nowrap;pointer-events:none;border:1px solid var(--border2)}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .main{height:auto}
+  .content{padding:14px}
+  .app-header{padding:12px 16px}
+  .toolbar{padding:8px 16px;top:57px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-logo">P</div>
+  <div>
+    <div class="app-title">PSS Upload Tracker</div>
+    <div class="app-sub">Polymeric Sand Store · Shopify carousel content</div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-n" id="stat-uploaded">0</div>
+      <div class="hstat-l">slides uploaded</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-n" id="stat-total">0</div>
+      <div class="hstat-l">total slots</div>
+    </div>
+    <div class="hstat">
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        <div class="progress-bar-wrap" style="width:100px">
+          <div class="progress-bar-fill" id="global-progress" style="width:0%"></div>
+        </div>
+        <span id="stat-pct" style="font-size:13px;font-weight:600;color:var(--accent2)">0%</span>
+      </div>
+      <div class="hstat-l" style="margin-top:4px">overall progress</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="search" placeholder="Search products..." oninput="applyFilters()">
+  </div>
+  <select id="filter-category" onchange="applyFilters()">
+    <option value="">All categories</option>
+  </select>
+  <select id="filter-brand" onchange="applyFilters()">
+    <option value="">All brands</option>
+  </select>
+  <select id="filter-status" onchange="applyFilters()">
+    <option value="">All statuses</option>
+    <option value="complete">Complete</option>
+    <option value="partial">In progress</option>
+    <option value="empty">Not started</option>
+  </select>
+  <div class="toolbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="showTab('slides')">Manage slides</button>
+    <button class="btn btn-ghost btn-sm" onclick="showAddProduct()">+ Product</button>
+    <button class="btn btn-primary btn-sm" onclick="showAddSlide()">+ Slide type</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar"></div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div id="tab-products">
+      <div id="product-list"></div>
+    </div>
+    <div id="tab-slides" style="display:none">
+      <div class="slide-manager">
+        <div class="slide-manager-header">
+          <div class="slide-manager-title">All slide types</div>
+          <button class="btn btn-primary btn-sm" onclick="showAddSlide()">+ Add slide type</button>
+        </div>
+        <div class="slide-type-list" id="slide-type-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-product" style="display:none" onclick="closeModal('modal-product',event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Add product</div>
+      <button class="modal-close" onclick="closeModal('modal-product')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Product name *</label>
+        <input class="form-input" id="np-name" placeholder="e.g. Gator Maxx G2 — Beige 50lb">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brand *</label>
+        <input class="form-input" id="np-brand" placeholder="e.g. Alliance">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select class="form-select" id="np-category"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Or create new category</label>
+        <input class="form-input" id="np-newcat" placeholder="e.g. Jointing Sand">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancel</button>
+      <button class="btn btn-primary" onclick="addProduct()">Add product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SLIDE MODAL -->
+<div class="modal-overlay" id="modal-slide" style="display:none" onclick="closeModal('modal-slide',event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Add slide type</div>
+      <button class="modal-close" onclick="closeModal('modal-slide')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Slide name *</label>
+        <input class="form-input" id="ns-name" placeholder="e.g. Color swatch — Beige">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tier</label>
+        <select class="form-select" id="ns-tier">
+          <option value="t1">T1 — Category template</option>
+          <option value="t2">T2 — Variant swap</option>
+          <option value="t3">T3 — Universal brand/trust</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Applies to categories (select all that apply)</label>
+        <div id="ns-categories" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input" id="ns-notes" placeholder="Any relevant notes about this slide">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-slide')">Cancel</button>
+      <button class="btn btn-primary" onclick="addSlide()">Add slide type</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// DATA
+// =====================
+
+const DEFAULT_CATEGORIES = [
+  'Polymeric Sand',
+  'Paver and Stone Sealers',
+  'Paver and Stone Cleaners',
+  'Paver Base Products',
+  'Jointing Sand / Resin Sand',
+  'Polymeric Stone Dust',
+  'Ice Melt',
+  'Paver and Stone Adhesives',
+  'Tools',
+  'Permeable Aggregate',
+  'Universal / Brand Trust'
+];
+
+const DEFAULT_SLIDES = [
+  // Universal T3
+  { id:'s-trust-badge', name:'Trust badge grid (4-panel)', tier:'t3', categories:DEFAULT_CATEGORIES, notes:'Expert curation, multi-brand, same-day shipping, free samples' },
+  { id:'s-samples-lifestyle', name:'Color samples lifestyle (couple)', tier:'t3', categories:DEFAULT_CATEGORIES, notes:'Couple at job site evaluating samples. CTA: $9.99 samples' },
+  { id:'s-shipping-lifestyle', name:'Same-day shipping lifestyle', tier:'t3', categories:DEFAULT_CATEGORIES, notes:'Delivery courier at residential home. Logo overlay.' },
+
+  // Polymeric Sand T1
+  { id:'s-poly-steps', name:'Step-by-step application guide', tier:'t1', categories:['Polymeric Sand'], notes:'5-step 2x2 grid + centered bottom. Hyperrealistic.' },
+  { id:'s-poly-howworks', name:'"How polymeric sand works" macro', tier:'t1', categories:['Polymeric Sand'], notes:'Hyperrealistic macro cross-section joint shot.' },
+  { id:'s-poly-beforeafter', name:'Before/after split (joints)', tier:'t1', categories:['Polymeric Sand'], notes:'Eroded vs locked joints. Diagonal or 50/50 vertical split.' },
+  { id:'s-poly-jointwidth', name:'Joint width compatibility chart', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand'], notes:'5 variants by joint width spec range.' },
+  { id:'s-poly-color-beige', name:'Color swatch — Beige/Tan', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand','Polymeric Stone Dust'], notes:'Overhead pavers + macro callout + pairing chips.' },
+  { id:'s-poly-color-grey', name:'Color swatch — Grey', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand','Polymeric Stone Dust'], notes:'' },
+  { id:'s-poly-color-darkgrey', name:'Color swatch — Dark Grey/Granite', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand','Polymeric Stone Dust'], notes:'' },
+  { id:'s-poly-color-ivory', name:'Color swatch — Ivory', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand','Polymeric Stone Dust'], notes:'' },
+  { id:'s-poly-color-black', name:'Color swatch — Black', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand','Polymeric Stone Dust'], notes:'' },
+  { id:'s-poly-color-platinum', name:'Color swatch — Platinum', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand'], notes:'' },
+  { id:'s-poly-color-pearl', name:'Color swatch — Pearl', tier:'t2', categories:['Polymeric Sand','Jointing Sand / Resin Sand'], notes:'1 SKU only (SEK). Low priority.' },
+
+  // Sealers
+  { id:'s-seal-whyseal', name:'"Why seal" benefits panel (6-panel)', tier:'t1', categories:['Paver and Stone Sealers'], notes:'Hyperrealistic 3x2 grid. 6 benefit scenes.' },
+  { id:'s-seal-steps', name:'Sealer application steps (6-step)', tier:'t1', categories:['Paver and Stone Sealers'], notes:'3-phase: Prep / Apply / Cure.' },
+  { id:'s-seal-lifestyle', name:'Lifestyle — sealed driveway', tier:'t1', categories:['Paver and Stone Sealers'], notes:'"This is what sealed looks like." + logo.' },
+  { id:'s-seal-coverage-1gal', name:'Coverage calculator — 1 gallon', tier:'t2', categories:['Paver and Stone Sealers'], notes:'100–200 sq ft per gallon.' },
+  { id:'s-seal-coverage-5gal', name:'Coverage calculator — 5 gallon', tier:'t2', categories:['Paver and Stone Sealers'], notes:'500–1,000 sq ft.' },
+  { id:'s-seal-finish', name:'Finish comparison (Zero/Satin/Wet Look)', tier:'t2', categories:['Paver and Stone Sealers'], notes:'3-panel horizontal split. Same paver, 3 finishes.' },
+
+  // Cleaners
+  { id:'s-clean-stain', name:'Problem/solution stain panel (4-panel)', tier:'t1', categories:['Paver and Stone Cleaners'], notes:'Efflorescence, oil/grease, rust, organic staining.' },
+  { id:'s-clean-steps-scrub', name:'Application: Apply, Scrub, Rinse', tier:'t1', categories:['Paver and Stone Cleaners'], notes:'Covers general, efflorescence, rust cleaners.' },
+  { id:'s-clean-steps-absorb', name:'Application: Apply, Wait, Sweep', tier:'t1', categories:['Paver and Stone Cleaners'], notes:'Oil and grease remover dry absorption method only.' },
+
+  // Paver Base
+  { id:'s-base-whysand', name:'"Why bedding sand matters" infographic', tier:'t1', categories:['Paver Base Products'], notes:'Cross-section stack + 3 benefit mini-panels.' },
+];
+
+const DEFAULT_PRODUCTS = [
+  // POLYMERIC SAND — Alliance
+  {id:'p001',name:'Gator Super Sand Bond',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p002',name:'Gator Super Sand G2',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p003',name:'Gator Maxx Sand',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p004',name:'Gator Maxx G2 — Beige',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p005',name:'Gator Maxx G2 — Slate Grey',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p006',name:'Gator Maxx G2 — Ivory',brand:'Alliance',category:'Polymeric Sand'},
+  {id:'p007',name:'Gator Maxx G2 — Black Diamond',brand:'Alliance',category:'Polymeric Sand'},
+  // Techniseal
+  {id:'p010',name:'HP NextGel — Urban Gray',brand:'Techniseal',category:'Polymeric Sand'},
+  {id:'p011',name:'HP NextGel — Western Gray',brand:'Techniseal',category:'Polymeric Sand'},
+  {id:'p012',name:'HP NextGel — Prairie Grey',brand:'Techniseal',category:'Polymeric Sand'},
+  {id:'p013',name:'HP NextGel — Ivory',brand:'Techniseal',category:'Polymeric Sand'},
+  {id:'p014',name:'HP NextGel — Black',brand:'Techniseal',category:'Polymeric Sand'},
+  {id:'p015',name:'HP NextGel — Granite',brand:'Techniseal',category:'Polymeric Sand'},
+  // SEK
+  {id:'p020',name:'Polysweep — Tan',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p021',name:'Polysweep — Gray',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p022',name:'Polysweep — Black',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p023',name:'Polysweep — Platinum',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p024',name:'Polysweep X-Treme — Tan',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p025',name:'Polysweep X-Treme — Gray',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  {id:'p026',name:'Polysweep X-Treme — Platinum',brand:'SEK SUREBOND',category:'Polymeric Sand'},
+  // SRW
+  {id:'p030',name:'X-Treme Polymeric Sand — Beige',brand:'SRW Products',category:'Polymeric Sand'},
+  {id:'p031',name:'X-Treme Polymeric Sand — Grey',brand:'SRW Products',category:'Polymeric Sand'},
+  // Rhino
+  {id:'p035',name:'Power Bond Plus — Tan',brand:'Rhino',category:'Polymeric Sand'},
+  {id:'p036',name:'Power Bond Plus — Grey',brand:'Rhino',category:'Polymeric Sand'},
+  // Quikrete
+  {id:'p040',name:'HardScapes Polymeric Sand — Tan',brand:'Quikrete',category:'Polymeric Sand'},
+  {id:'p041',name:'HardScapes Polymeric Sand — Grey',brand:'Quikrete',category:'Polymeric Sand'},
+
+  // SEALERS — Alliance
+  {id:'p100',name:'Gator Seal Natural Look',brand:'Alliance',category:'Paver and Stone Sealers'},
+  {id:'p101',name:'Gator Seal Wet Look',brand:'Alliance',category:'Paver and Stone Sealers'},
+  {id:'p102',name:'Gator Seal Satin',brand:'Alliance',category:'Paver and Stone Sealers'},
+  // Techniseal
+  {id:'p110',name:'Wet Look Sealer 1 gal',brand:'Techniseal',category:'Paver and Stone Sealers'},
+  {id:'p111',name:'Wet Look Sealer 5 gal',brand:'Techniseal',category:'Paver and Stone Sealers'},
+  {id:'p112',name:'Natural Look Sealer 1 gal',brand:'Techniseal',category:'Paver and Stone Sealers'},
+  {id:'p113',name:'Natural Look Sealer 5 gal',brand:'Techniseal',category:'Paver and Stone Sealers'},
+  // SEK
+  {id:'p120',name:'SureSeal WB — 1 gal',brand:'SEK SUREBOND',category:'Paver and Stone Sealers'},
+  {id:'p121',name:'SureSeal WB — 5 gal',brand:'SEK SUREBOND',category:'Paver and Stone Sealers'},
+  {id:'p122',name:'SureSeal SB — 1 gal',brand:'SEK SUREBOND',category:'Paver and Stone Sealers'},
+  // Dyco
+  {id:'p130',name:'Paver Sealer — 1 gal',brand:'Dyco',category:'Paver and Stone Sealers'},
+  {id:'p131',name:'Paver Sealer — 5 gal',brand:'Dyco',category:'Paver and Stone Sealers'},
+  // Miracle
+  {id:'p135',name:'511 Impregnator Sealer — 1 gal',brand:'Miracle Sealants',category:'Paver and Stone Sealers'},
+  // PPG
+  {id:'p140',name:'Paver Sealer Clear — 1 gal',brand:'PPG',category:'Paver and Stone Sealers'},
+  // UGL
+  {id:'p145',name:'DryLok Masonry Sealer — 1 gal',brand:'UGL',category:'Paver and Stone Sealers'},
+
+  // CLEANERS
+  {id:'p200',name:'Gator Efflorescence Cleaner',brand:'Alliance',category:'Paver and Stone Cleaners'},
+  {id:'p201',name:'Gator Clean Multi-Purpose',brand:'Alliance',category:'Paver and Stone Cleaners'},
+  {id:'p202',name:'Gator Rust Remover',brand:'Alliance',category:'Paver and Stone Cleaners'},
+  {id:'p203',name:'Gator Oil & Grease Remover',brand:'Alliance',category:'Paver and Stone Cleaners'},
+  {id:'p210',name:'Neutra Clean',brand:'Techniseal',category:'Paver and Stone Cleaners'},
+  {id:'p211',name:'Efflorescence Remover',brand:'Techniseal',category:'Paver and Stone Cleaners'},
+  {id:'p212',name:'Oil & Grease Remover',brand:'Techniseal',category:'Paver and Stone Cleaners'},
+  {id:'p220',name:'SureClean General Cleaner',brand:'SEK SUREBOND',category:'Paver and Stone Cleaners'},
+  {id:'p221',name:'Efflo Off',brand:'SEK SUREBOND',category:'Paver and Stone Cleaners'},
+  {id:'p222',name:'Oil Extractor',brand:'SEK SUREBOND',category:'Paver and Stone Cleaners'},
+  {id:'p230',name:'511 Spray & Rinse Cleaner',brand:'Miracle Sealants',category:'Paver and Stone Cleaners'},
+
+  // PAVER BASE
+  {id:'p300',name:'Paver Base Step 1 — Coarse',brand:'KolorScape',category:'Paver Base Products'},
+  {id:'p301',name:'Paver Leveling Sand Step 2 — Fine',brand:'KolorScape',category:'Paver Base Products'},
+  {id:'p310',name:'Patio Paver Base Sand',brand:'Quikrete',category:'Paver Base Products'},
+  {id:'p311',name:'All Purpose Gravel',brand:'Quikrete',category:'Paver Base Products'},
+  {id:'p320',name:'Paver Base Sand',brand:'Pavestone',category:'Paver Base Products'},
+  {id:'p330',name:'Gator Base Interlocking Panels — 1 Panel',brand:'Alliance',category:'Paver Base Products'},
+  {id:'p331',name:'Gator Base Interlocking Panels — 10 Panels',brand:'Alliance',category:'Paver Base Products'},
+  {id:'p340',name:'StickyStone Hardscape Adhesive',brand:'Techniseal',category:'Paver Base Products'},
+  {id:'p350',name:'Landscape Fabric 12"x100\'',brand:'Romex',category:'Paver Base Products'},
+  {id:'p351',name:'Landscape Fabric 12"x300\'',brand:'Romex',category:'Paver Base Products'},
+
+  // JOINTING SAND
+  {id:'p400',name:'Gator Nitro — Gunmetal',brand:'Alliance',category:'Jointing Sand / Resin Sand'},
+  {id:'p401',name:'Gator Nitro — Platinum',brand:'Alliance',category:'Jointing Sand / Resin Sand'},
+  {id:'p410',name:'HP NextGel Resin Sand — Graphite',brand:'Techniseal',category:'Jointing Sand / Resin Sand'},
+  {id:'p411',name:'HP NextGel Resin Sand — Ivory',brand:'Techniseal',category:'Jointing Sand / Resin Sand'},
+
+  // STONE DUST
+  {id:'p500',name:'Gator Dust Bond — Beige',brand:'Alliance',category:'Polymeric Stone Dust'},
+  {id:'p501',name:'Gator Dust Bond — Grey',brand:'Alliance',category:'Polymeric Stone Dust'},
+
+  // ICE MELT
+  {id:'p600',name:'Ice Melt — Blue',brand:'Home and Country USA',category:'Ice Melt'},
+  {id:'p601',name:'Ice Melt — Green',brand:'Home and Country USA',category:'Ice Melt'},
+  {id:'p602',name:'Ice Melt — Orange',brand:'Home and Country USA',category:'Ice Melt'},
+  {id:'p603',name:'Ice Melt — Pink',brand:'Home and Country USA',category:'Ice Melt'},
+  {id:'p604',name:'Ice Melt — Purple',brand:'Home and Country USA',category:'Ice Melt'},
+  {id:'p605',name:'Ice Melt — White',brand:'Home and Country USA',category:'Ice Melt'},
+
+  // ADHESIVES
+  {id:'p700',name:'DynaGrip Heavy Duty Construction Adhesive',brand:'DAP',category:'Paver and Stone Adhesives'},
+  {id:'p710',name:'SikaFlex Construction Sealant',brand:'SikaFlex',category:'Paver and Stone Adhesives'},
+
+  // TOOLS
+  {id:'p800',name:'Chapin Pump Sprayer 1 gal',brand:'Chapin',category:'Tools'},
+  {id:'p801',name:'Chapin Pump Sprayer 2 gal',brand:'Chapin',category:'Tools'},
+  {id:'p810',name:'Birdwell Paint Brush 4"',brand:'Birdwell',category:'Tools'},
+  {id:'p820',name:'Linzer Foam Roller',brand:'Linzer',category:'Tools'},
+  {id:'p830',name:'Purdy Roller Cover',brand:'Purdy',category:'Tools'},
+  {id:'p840',name:'Gilmour Adjustable Sprayer',brand:'Gilmour',category:'Tools'},
+
+  // PERMEABLE
+  {id:'p900',name:'Permeable Aggregate — 50lb',brand:'',category:'Permeable Aggregate'},
+];
+
+// =====================
+// STATE
+// =====================
+let state = {
+  products: [],
+  slides: [],
+  checked: {}, // { 'productId_slideId': true }
+  excluded: {}, // { 'productId_slideId': true } — slide not applicable for this product
+  categories: []
+};
+
+function loadState() {
+  const saved = localStorage.getItem('pss-tracker-v2');
+  if (saved) {
+    try {
+      state = JSON.parse(saved);
+      if (!state.excluded) state.excluded = {}; // backwards compat
+    } catch(e) {}
+  } else {
+    state.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    state.slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
+    state.checked = {};
+    state.excluded = {};
+    state.categories = [...DEFAULT_CATEGORIES];
+  }
+  // Ensure categories are up to date
+  rebuildCategories();
+}
+
+function saveState() {
+  localStorage.setItem('pss-tracker-v2', JSON.stringify(state));
+}
+
+function rebuildCategories() {
+  const cats = new Set(DEFAULT_CATEGORIES);
+  state.products.forEach(p => cats.add(p.category));
+  state.slides.forEach(s => (s.categories||[]).forEach(c => cats.add(c)));
+  state.categories = [...cats];
+}
+
+// =====================
+// TABS
+// =====================
+let activeTab = 'products';
+function showTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-products').style.display = tab === 'products' ? '' : 'none';
+  document.getElementById('tab-slides').style.display = tab === 'slides' ? '' : 'none';
+  if (tab === 'slides') renderSlideManager();
+}
+
+// =====================
+// RENDER
+// =====================
+function getRelevantSlides(product) {
+  return state.slides.filter(s =>
+    !state.excluded[`${product.id}_${s.id}`] && (
+      !s.categories || s.categories.length === 0 ||
+      s.categories.includes(product.category) ||
+      s.categories.includes('Universal / Brand Trust')
+    )
+  );
+}
+
+function getAllSlidesForProduct(product) {
+  // Returns all applicable slides including excluded ones (for rendering)
+  return state.slides.filter(s =>
+    !s.categories || s.categories.length === 0 ||
+    s.categories.includes(product.category) ||
+    s.categories.includes('Universal / Brand Trust')
+  );
+}
+
+function getProductProgress(product) {
+  const slides = getRelevantSlides(product);
+  if (slides.length === 0) return { done: 0, total: 0, pct: 0 };
+  const done = slides.filter(s => state.checked[`${product.id}_${s.id}`]).length;
+  return { done, total: slides.length, pct: Math.round(done / slides.length * 100) };
+}
+
+function getStatusClass(pct) {
+  if (pct === 100) return 'complete';
+  if (pct > 0) return 'partial';
+  return 'empty';
+}
+
+function getProgressColor(pct) {
+  if (pct === 100) return 'var(--teal)';
+  if (pct > 0) return 'var(--amber)';
+  return 'var(--bg4)';
+}
+
+function renderAll() {
+  renderSidebar();
+  renderProducts();
+  renderFilters();
+  updateGlobalStats();
+}
+
+function renderSidebar() {
+  const cats = state.categories;
+  let html = `
+    <div class="sidebar-section">
+      <div class="sidebar-label">Categories</div>
+      <div class="sidebar-item ${activeCategory === '' ? 'active' : ''}" onclick="filterByCategory('')">
+        All products
+        <span class="sidebar-count">${state.products.length}</span>
+      </div>`;
+  cats.forEach(cat => {
+    const count = state.products.filter(p => p.category === cat).length;
+    if (count === 0) return;
+    html += `<div class="sidebar-item ${activeCategory === cat ? 'active' : ''}" onclick="filterByCategory('${cat.replace(/'/g,"\\'")}')">
+      ${cat}
+      <span class="sidebar-count">${count}</span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('sidebar').innerHTML = html;
+}
+
+let activeCategory = '';
+function filterByCategory(cat) {
+  activeCategory = cat;
+  document.getElementById('filter-category').value = cat;
+  applyFilters();
+  renderSidebar();
+}
+
+function renderFilters() {
+  const catSel = document.getElementById('filter-category');
+  const brandSel = document.getElementById('filter-brand');
+  const savedCat = catSel.value;
+  const savedBrand = brandSel.value;
+
+  catSel.innerHTML = '<option value="">All categories</option>';
+  state.categories.forEach(cat => {
+    if (state.products.some(p => p.category === cat)) {
+      catSel.innerHTML += `<option value="${cat}">${cat}</option>`;
+    }
+  });
+  catSel.value = savedCat;
+
+  const brands = [...new Set(state.products.map(p => p.brand).filter(Boolean))].sort();
+  brandSel.innerHTML = '<option value="">All brands</option>';
+  brands.forEach(b => brandSel.innerHTML += `<option value="${b}">${b}</option>`);
+  brandSel.value = savedBrand;
+}
+
+function applyFilters() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filter-category').value;
+  const brand = document.getElementById('filter-brand').value;
+  const status = document.getElementById('filter-status').value;
+  activeCategory = cat;
+  renderSidebar();
+  renderProducts(search, cat, brand, status);
+}
+
+function renderProducts(search='', cat='', brand='', status='') {
+  let products = state.products.filter(p => {
+    if (search && !p.name.toLowerCase().includes(search) && !p.brand.toLowerCase().includes(search)) return false;
+    if (cat && p.category !== cat) return false;
+    if (brand && p.brand !== brand) return false;
+    if (status) {
+      const prog = getProductProgress(p);
+      if (status === 'complete' && prog.pct !== 100) return false;
+      if (status === 'partial' && (prog.pct === 0 || prog.pct === 100)) return false;
+      if (status === 'empty' && prog.pct !== 0) return false;
+    }
+    return true;
+  });
+
+  // Group by category
+  const grouped = {};
+  products.forEach(p => {
+    if (!grouped[p.category]) grouped[p.category] = [];
+    grouped[p.category].push(p);
+  });
+
+  if (products.length === 0) {
+    document.getElementById('product-list').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">○</div>
+        <div class="empty-text">No products match your filters</div>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+  Object.keys(grouped).sort().forEach(category => {
+    const prods = grouped[category];
+    const catSlides = state.slides.filter(s => !s.categories || s.categories.includes(category) || s.categories.includes('Universal / Brand Trust'));
+    const totalSlots = prods.reduce((sum, p) => sum + getRelevantSlides(p).length, 0);
+    const doneSlots = prods.reduce((sum, p) => {
+      const slides = getRelevantSlides(p);
+      return sum + slides.filter(s => state.checked[`${p.id}_${s.id}`]).length;
+    }, 0);
+    const catPct = totalSlots > 0 ? Math.round(doneSlots / totalSlots * 100) : 0;
+
+    html += `<div class="category-section">
+      <div class="category-header">
+        <div>
+          <div class="category-title">${category}</div>
+          <div class="category-meta">${prods.length} product${prods.length !== 1 ? 's' : ''} · ${catSlides.length} slide types</div>
+        </div>
+        <div class="category-progress">
+          <div class="cat-prog-bar"><div class="cat-prog-fill" style="width:${catPct}%"></div></div>
+          <span>${catPct}%</span>
+        </div>
+      </div>`;
+
+    prods.forEach(p => {
+      const prog = getProductProgress(p);
+      const slides = getRelevantSlides(p);
+      html += `
+        <div class="product-card" id="card-${p.id}">
+          <div class="product-header" onclick="toggleCard('${p.id}')">
+            <div style="flex:1">
+              <div class="product-name">${p.name}</div>
+              <div class="product-brand">${p.brand}</div>
+            </div>
+            <div class="product-progress">
+              <span class="badge badge-${getStatusClass(prog.pct)}">${prog.pct === 100 ? '✓ Done' : prog.pct > 0 ? `${prog.done}/${prog.total}` : 'Not started'}</span>
+              <div class="prog-bar"><div class="prog-fill" style="width:${prog.pct}%;background:${getProgressColor(prog.pct)}"></div></div>
+            </div>
+            <span class="chevron-icon">▾</span>
+          </div>
+          <div class="slide-grid" style="display:none" id="slides-${p.id}">
+            ${getAllSlidesForProduct(p).map(s => {
+              const key = `${p.id}_${s.id}`;
+              const isChecked = !!state.checked[key];
+              const isExcluded = !!state.excluded[key];
+              return `<div class="slide-item ${isChecked ? 'checked' : ''} ${isExcluded ? 'excluded' : ''}" id="si-${key}">
+                <div class="slide-check" onclick="${isExcluded ? '' : `toggleSlide('${p.id}','${s.id}')`}" style="${isExcluded ? 'cursor:not-allowed;opacity:0.4' : 'cursor:pointer'}">
+                  <span class="slide-check-icon">${isExcluded ? '−' : '✓'}</span>
+                </div>
+                <div class="slide-name" onclick="${isExcluded ? '' : `toggleSlide('${p.id}','${s.id}')`}" style="${isExcluded ? '' : 'cursor:pointer'}">${s.name}</div>
+                <span class="slide-tier tier-${s.tier}">${s.tier.toUpperCase()}</span>
+                <button class="slide-exclude tooltip" data-tip="${isExcluded ? 'Re-include this slide' : 'Mark as not applicable'}" onclick="toggleExclude('${p.id}','${s.id}')">${isExcluded ? '↩' : '✕'}</button>
+              </div>`;
+            }).join('')}
+            <div class="slide-item" style="cursor:pointer;border:1px dashed var(--border2)" onclick="showAddSlide()">
+              <div style="font-size:11px;color:var(--text3)">+ Add slide type</div>
+            </div>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('product-list').innerHTML = html;
+}
+
+function toggleCard(productId) {
+  const card = document.getElementById(`card-${productId}`);
+  const grid = document.getElementById(`slides-${productId}`);
+  const isOpen = card.classList.contains('open');
+  card.classList.toggle('open', !isOpen);
+  grid.style.display = isOpen ? 'none' : 'grid';
+}
+
+function toggleSlide(productId, slideId) {
+  const key = `${productId}_${slideId}`;
+  if (state.checked[key]) {
+    delete state.checked[key];
+  } else {
+    state.checked[key] = true;
+  }
+  saveState();
+
+  // Update card UI without full re-render
+  const slideEl = document.querySelector(`#slides-${productId} [onclick="toggleSlide('${productId}','${slideId}')"]`);
+  if (slideEl) {
+    slideEl.classList.toggle('checked', !!state.checked[key]);
+  }
+
+  // Update product header
+  const prog = getProductProgress(state.products.find(p => p.id === productId));
+  const header = document.querySelector(`#card-${productId} .product-progress`);
+  if (header) {
+    header.innerHTML = `
+      <span class="badge badge-${getStatusClass(prog.pct)}">${prog.pct === 100 ? '✓ Done' : prog.pct > 0 ? `${prog.done}/${prog.total}` : 'Not started'}</span>
+      <div class="prog-bar"><div class="prog-fill" style="width:${prog.pct}%;background:${getProgressColor(prog.pct)}"></div></div>`;
+  }
+
+  updateGlobalStats();
+}
+
+function toggleExclude(productId, slideId) {
+  const key = `${productId}_${slideId}`;
+  if (state.excluded[key]) {
+    delete state.excluded[key];
+  } else {
+    state.excluded[key] = true;
+    // Also uncheck if it was checked
+    delete state.checked[key];
+  }
+  saveState();
+
+  // Update the slide item UI
+  const el = document.getElementById(`si-${key}`);
+  if (el) {
+    const isExcluded = !!state.excluded[key];
+    const isChecked = !!state.checked[key];
+    el.className = `slide-item ${isChecked ? 'checked' : ''} ${isExcluded ? 'excluded' : ''}`;
+    const checkEl = el.querySelector('.slide-check');
+    const checkIcon = el.querySelector('.slide-check-icon');
+    const nameEl = el.querySelector('.slide-name');
+    const excludeBtn = el.querySelector('.slide-exclude');
+    checkEl.style.cursor = isExcluded ? 'not-allowed' : 'pointer';
+    checkEl.style.opacity = isExcluded ? '0.4' : '1';
+    checkEl.onclick = isExcluded ? null : () => toggleSlide(productId, slideId);
+    checkIcon.textContent = isExcluded ? '−' : (isChecked ? '✓' : '');
+    nameEl.style.cursor = isExcluded ? 'default' : 'pointer';
+    nameEl.onclick = isExcluded ? null : () => toggleSlide(productId, slideId);
+    excludeBtn.textContent = isExcluded ? '↩' : '✕';
+    excludeBtn.setAttribute('data-tip', isExcluded ? 'Re-include this slide' : 'Mark as not applicable');
+  }
+
+  // Update product header progress
+  const prog = getProductProgress(state.products.find(p => p.id === productId));
+  const header = document.querySelector(`#card-${productId} .product-progress`);
+  if (header) {
+    header.innerHTML = `
+      <span class="badge badge-${getStatusClass(prog.pct)}">${prog.pct === 100 ? '✓ Done' : prog.pct > 0 ? `${prog.done}/${prog.total}` : 'Not started'}</span>
+      <div class="prog-bar"><div class="prog-fill" style="width:${prog.pct}%;background:${getProgressColor(prog.pct)}"></div></div>`;
+  }
+
+  updateGlobalStats();
+}
+
+function updateGlobalStats() {
+  let totalSlots = 0, doneSlots = 0;
+  state.products.forEach(p => {
+    const slides = getRelevantSlides(p);
+    totalSlots += slides.length;
+    doneSlots += slides.filter(s => state.checked[`${p.id}_${s.id}`]).length;
+  });
+  const pct = totalSlots > 0 ? Math.round(doneSlots / totalSlots * 100) : 0;
+  document.getElementById('stat-uploaded').textContent = doneSlots;
+  document.getElementById('stat-total').textContent = totalSlots;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('global-progress').style.width = pct + '%';
+}
+
+// =====================
+// SLIDE MANAGER
+// =====================
+function renderSlideManager() {
+  const list = document.getElementById('slide-type-list');
+  list.innerHTML = state.slides.map(s => `
+    <div class="slide-type-item">
+      <div>
+        <div class="slide-type-name">${s.name}</div>
+        <div class="slide-type-cat">${(s.categories||[]).join(', ') || 'All categories'}</div>
+      </div>
+      <span class="slide-tier tier-${s.tier}" style="margin-right:6px">${s.tier.toUpperCase()}</span>
+      <button class="slide-delete" onclick="deleteSlide('${s.id}')" title="Delete slide type">✕</button>
+    </div>`).join('');
+}
+
+function deleteSlide(slideId) {
+  if (!confirm('Remove this slide type? This will also remove all upload records for it.')) return;
+  state.slides = state.slides.filter(s => s.id !== slideId);
+  Object.keys(state.checked).forEach(k => { if (k.endsWith('_' + slideId)) delete state.checked[k]; });
+  saveState();
+  renderAll();
+  renderSlideManager();
+}
+
+// =====================
+// MODALS
+// =====================
+function showAddProduct() {
+  // Populate category select
+  const sel = document.getElementById('np-category');
+  sel.innerHTML = state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('np-name').value = '';
+  document.getElementById('np-brand').value = '';
+  document.getElementById('np-newcat').value = '';
+  document.getElementById('modal-product').style.display = 'flex';
+}
+
+function showAddSlide() {
+  document.getElementById('ns-name').value = '';
+  document.getElementById('ns-notes').value = '';
+  document.getElementById('ns-tier').value = 't1';
+  const catDiv = document.getElementById('ns-categories');
+  catDiv.innerHTML = state.categories.map(c => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer">
+      <input type="checkbox" value="${c}" style="accent-color:var(--accent)"> ${c}
+    </label>`).join('');
+  document.getElementById('modal-slide').style.display = 'flex';
+}
+
+function closeModal(id, event) {
+  if (event && event.target !== document.getElementById(id)) return;
+  document.getElementById(id).style.display = 'none';
+}
+
+function addProduct() {
+  const name = document.getElementById('np-name').value.trim();
+  const brand = document.getElementById('np-brand').value.trim();
+  const newCat = document.getElementById('np-newcat').value.trim();
+  const selCat = document.getElementById('np-category').value;
+  const category = newCat || selCat;
+
+  if (!name || !category) return alert('Product name and category are required.');
+
+  const id = 'p-custom-' + Date.now();
+  state.products.push({ id, name, brand, category });
+  if (newCat && !state.categories.includes(newCat)) state.categories.push(newCat);
+  saveState();
+  closeModal('modal-product');
+  renderAll();
+}
+
+function addSlide() {
+  const name = document.getElementById('ns-name').value.trim();
+  const tier = document.getElementById('ns-tier').value;
+  const notes = document.getElementById('ns-notes').value.trim();
+  const checked = [...document.querySelectorAll('#ns-categories input:checked')].map(el => el.value);
+
+  if (!name) return alert('Slide name is required.');
+
+  const id = 's-custom-' + Date.now();
+  state.slides.push({ id, name, tier, categories: checked.length > 0 ? checked : state.categories, notes });
+  saveState();
+  closeModal('modal-slide');
+  renderAll();
+  if (activeTab === 'slides') renderSlideManager();
+}
+
+// =====================
+// INIT
+// =====================
+loadState();
+renderAll();
+</script>
+</body>
+</html>
